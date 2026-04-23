@@ -9,7 +9,7 @@ export class TradeMonitor {
   async initialize(): Promise<void> {
     this.lastProcessedTimestamp = Date.now();
     console.log(`📊 Monitor initialized at ${new Date(this.lastProcessedTimestamp).toISOString()}`);
-    console.log(`   Will copy trades that occur AFTER this time`);
+    console.log(`   Will ${config.monitorOnly ? 'log' : 'copy'} trades that occur AFTER this time`);
   }
 
   private async fetchTradesFromDataApi(): Promise<Trade[]> {

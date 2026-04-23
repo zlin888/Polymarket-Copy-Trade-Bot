@@ -44,6 +44,18 @@ npm run build
 npm run start:prod
 ```
 
+## Monitor Only
+
+To watch a wallet without placing trades, set:
+
+```env
+MONITOR_ONLY=true
+TARGET_WALLET=0xTARGET_WALLET_TO_MONITOR
+USE_WEBSOCKET=false
+```
+
+In monitor-only mode the bot does not require `WALLET_PRIVATE_KEY`, does not derive API keys, does not check or create approvals, and does not place orders. It only logs trades detected after startup.
+
 ## Scripts
 
 | Script | Description |
@@ -61,6 +73,8 @@ npm run start:prod
 - `TARGET_WALLET` – wallet to copy
 - `WALLET_PRIVATE_KEY` – bot signer
 - `RPC_URL` – Polygon RPC URL
+
+`WALLET_PRIVATE_KEY` is not required when `MONITOR_ONLY=true`.
 
 **Auth** (default: EOA)
 
@@ -82,6 +96,7 @@ npm run start:prod
 
 **Monitoring**
 
+- `MONITOR_ONLY` – `true` to log target trades only and disable all trading actions. Default `false`
 - `USE_WEBSOCKET` – `true` (default) or `false` for REST polling
 - `USE_USER_CHANNEL` – set `true` to use user channel for activity
 - `POLL_INTERVAL` – REST poll interval in ms. Default `2000`

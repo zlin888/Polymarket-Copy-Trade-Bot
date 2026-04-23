@@ -18,6 +18,7 @@ function parseSigType(): 0 | 1 | 2 {
 export const config = {
   targetWallet: process.env.TARGET_WALLET || '',
   privateKey: process.env.WALLET_PRIVATE_KEY || '',
+  monitorOnly: process.env.MONITOR_ONLY === 'true',
   polymarketGeoToken: process.env.POLYMARKET_GEO_TOKEN || '',
   rpcUrl: process.env.RPC_URL || 'https://polygon-rpc.com',
   chainId: 137,
@@ -61,17 +62,21 @@ export const config = {
 };
 
 export function validateConfig(): void {
-  const required = ['targetWallet', 'privateKey'];
+  const required = config.monitorOnly ? ['targetWallet'] : ['targetWallet', 'privateKey'];
   for (const key of required) {
     if (!config[key as keyof typeof config]) {
       throw new Error(`Missing required config: ${key}`);
     }
   }
 
-  console.log('ℹ️  API credentials will be derived/generated from WALLET_PRIVATE_KEY at startup');
+  if (config.monitorOnly) {
+    console.log('👁️  Monitor-only mode enabled: no API keys, approvals, or orders will be used');
+  } else {
+    console.log('ℹ️  API credentials will be derived/generated from WALLET_PRIVATE_KEY at startup');
+  }
 
   const { sigType, funderAddress } = config.auth;
-  if ((sigType === 1 || sigType === 2) && !funderAddress) {
+  if (!config.monitorOnly && (sigType === 1 || sigType === 2) && !funderAddress) {
     console.warn('⚠️  SIG_TYPE 1 or 2 usually requires PROXY_WALLET_ADDRESS (proxy/safe address). Set PROXY_WALLET_ADDRESS in .env if needed.');
   }
 

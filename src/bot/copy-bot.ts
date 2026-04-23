@@ -16,9 +16,9 @@ export interface BotStats {
 export class PolymarketCopyBot {
   private monitor: TradeMonitor;
   private wsMonitor?: WebSocketMonitor;
-  private executor: TradeExecutor;
+  private executor?: TradeExecutor;
   private positions: PositionTracker;
-  private risk: RiskManager;
+  private risk?: RiskManager;
   private isRunning: boolean = false;
   private processedTrades: Set<string> = new Set();
   private botStartTime: number = 0;
@@ -32,9 +32,11 @@ export class PolymarketCopyBot {
 
   constructor() {
     this.monitor = new TradeMonitor();
-    this.executor = new TradeExecutor();
     this.positions = new PositionTracker();
-    this.risk = new RiskManager(this.positions);
+    if (!config.monitorOnly) {
+      this.executor = new TradeExecutor();
+      this.risk = new RiskManager(this.positions);
+    }
   }
 
   async initialize(): Promise<void> {
@@ -44,6 +46,7 @@ export class PolymarketCopyBot {
     console.log(`Position multiplier: ${config.trading.positionSizeMultiplier * 100}%`);
     console.log(`Max trade size: ${config.trading.maxTradeSize} USDC`);
     console.log(`Order type: ${config.trading.orderType}`);
+    console.log(`Mode: ${config.monitorOnly ? 'Monitor only (no trading)' : 'Copy trading'}`);
     console.log(`WebSocket: ${config.monitoring.useWebSocket ? 'Enabled' : 'Disabled'}`);
     if (config.risk.maxSessionNotional > 0 || config.risk.maxPerMarketNotional > 0) {
       console.log(`Risk caps: session=${config.risk.maxSessionNotional || '∞'} USDC, per-market=${config.risk.maxPerMarketNotional || '∞'} USDC`);
@@ -56,17 +59,26 @@ export class PolymarketCopyBot {
 
     this.botStartTime = Date.now();
     console.log(`⏰ Bot start time: ${new Date(this.botStartTime).toISOString()}`);
-    console.log('   (Only trades after this time will be copied)\n');
+    console.log(`   (Only trades after this time will be ${config.monitorOnly ? 'logged' : 'copied'})\n`);
 
     await this.monitor.initialize();
-    await this.executor.initialize();
-    await this.reconcilePositions();
+    if (config.monitorOnly) {
+      console.log('👁️  Trading initialization skipped');
+    } else {
+      await this.executor!.initialize();
+      await this.reconcilePositions();
+    }
 
     if (config.monitoring.useWebSocket) {
       this.wsMonitor = new WebSocketMonitor();
       try {
-        const wsAuth = this.executor.getWsAuth();
         const channel = config.monitoring.useUserChannel ? 'user' : 'market';
+        const wsAuth = this.executor?.getWsAuth();
+        if (channel === 'user' && !wsAuth) {
+          console.warn('⚠️  User-channel WebSocket requires trading API auth; WebSocket disabled in monitor-only mode');
+          this.wsMonitor = undefined;
+          return;
+        }
         await this.wsMonitor.initialize(this.handleNewTrade.bind(this), channel, wsAuth ?? undefined);
         console.log(`✅ WebSocket monitor initialized (${channel} channel)\n`);
 
@@ -134,13 +146,23 @@ export class PolymarketCopyBot {
     console.log(`   Token ID: ${trade.tokenId}`);
     console.log('='.repeat(50));
 
+    if (this.wsMonitor) {
+      await this.wsMonitor.subscribeToMarket(trade.tokenId);
+    }
+
+    if (config.monitorOnly) {
+      console.log('👁️  Monitor-only mode: trade logged, no order will be placed');
+      return;
+    }
+
     if (trade.side === 'SELL') {
       console.log('⚠️  Skipping SELL trade (BUY-only safeguard enabled)');
       return;
     }
 
-    if (this.wsMonitor) {
-      await this.wsMonitor.subscribeToMarket(trade.tokenId);
+    if (!this.executor || !this.risk) {
+      console.log('⚠️  Trading components are not initialized');
+      return;
     }
 
     const copyNotional = this.executor.calculateCopySize(trade.size);
@@ -174,6 +196,10 @@ export class PolymarketCopyBot {
   }
 
   private async reconcilePositions(): Promise<void> {
+    if (!this.executor) {
+      return;
+    }
+
     try {
       const positions = await this.executor.getPositions();
       if (!positions || positions.length === 0) {
@@ -212,7 +238,7 @@ export class PolymarketCopyBot {
     return this.positions;
   }
 
-  getRiskManager(): RiskManager {
+  getRiskManager(): RiskManager | undefined {
     return this.risk;
   }
 
