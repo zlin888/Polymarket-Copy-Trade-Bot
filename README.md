@@ -46,16 +46,31 @@ npm run start:prod
 
 ## Monitor Only
 
-To watch a wallet without placing trades, set:
+Use this mode to watch a wallet without any trading side effects:
+
+```bash
+cp .env.example .env
+```
+
+Then set:
 
 ```env
 MONITOR_ONLY=true
 TARGET_WALLET=0xTARGET_WALLET_TO_MONITOR
 USE_WEBSOCKET=false
 MONITOR_LOOKBACK_HOURS=24
+POLL_INTERVAL=2000
+WALLET_PRIVATE_KEY=
+RPC_URL=
 ```
 
-In monitor-only mode the bot does not require `WALLET_PRIVATE_KEY`, does not derive API keys, does not check or create approvals, and does not place orders. It only logs trades detected after startup.
+Run:
+
+```bash
+npm start
+```
+
+In monitor-only mode the bot does not require `WALLET_PRIVATE_KEY`, does not derive API keys, does not check or create approvals, and does not place orders. It only logs trades detected after the configured start time. `MONITOR_LOOKBACK_HOURS=24` starts REST polling one day before startup so recent historical trades are printed first.
 
 ## Scripts
 
