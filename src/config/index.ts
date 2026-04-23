@@ -54,6 +54,7 @@ export const config = {
 
   monitoring: {
     pollInterval: parseInt(process.env.POLL_INTERVAL || '2000'),
+    lookbackHours: parseFloat(process.env.MONITOR_LOOKBACK_HOURS || '0'),
     useWebSocket,
     useUserChannel: process.env.USE_USER_CHANNEL === 'true',
     wsAssetIds: parseCsv(process.env.WS_ASSET_IDS),

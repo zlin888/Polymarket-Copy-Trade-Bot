@@ -52,6 +52,7 @@ To watch a wallet without placing trades, set:
 MONITOR_ONLY=true
 TARGET_WALLET=0xTARGET_WALLET_TO_MONITOR
 USE_WEBSOCKET=false
+MONITOR_LOOKBACK_HOURS=24
 ```
 
 In monitor-only mode the bot does not require `WALLET_PRIVATE_KEY`, does not derive API keys, does not check or create approvals, and does not place orders. It only logs trades detected after startup.
@@ -100,6 +101,7 @@ In monitor-only mode the bot does not require `WALLET_PRIVATE_KEY`, does not der
 - `USE_WEBSOCKET` – `true` (default) or `false` for REST polling
 - `USE_USER_CHANNEL` – set `true` to use user channel for activity
 - `POLL_INTERVAL` – REST poll interval in ms. Default `2000`
+- `MONITOR_LOOKBACK_HOURS` – start REST monitoring this many hours before startup. Default `0`
 - `WS_ASSET_IDS` – comma-separated asset IDs to subscribe (WebSocket)
 - `WS_MARKET_IDS` – comma-separated market IDs to subscribe (WebSocket)
 

@@ -57,7 +57,8 @@ export class PolymarketCopyBot {
 
     validateConfig();
 
-    this.botStartTime = Date.now();
+    const lookbackMs = Math.max(0, config.monitoring.lookbackHours) * 60 * 60 * 1000;
+    this.botStartTime = Date.now() - lookbackMs;
     console.log(`⏰ Bot start time: ${new Date(this.botStartTime).toISOString()}`);
     console.log(`   (Only trades after this time will be ${config.monitorOnly ? 'logged' : 'copied'})\n`);
 

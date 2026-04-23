@@ -7,7 +7,8 @@ export class TradeMonitor {
   private processedTradeIds: Set<string> = new Set();
 
   async initialize(): Promise<void> {
-    this.lastProcessedTimestamp = Date.now();
+    const lookbackMs = Math.max(0, config.monitoring.lookbackHours) * 60 * 60 * 1000;
+    this.lastProcessedTimestamp = Date.now() - lookbackMs;
     console.log(`📊 Monitor initialized at ${new Date(this.lastProcessedTimestamp).toISOString()}`);
     console.log(`   Will ${config.monitorOnly ? 'log' : 'copy'} trades that occur AFTER this time`);
   }
